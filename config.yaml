@@ -1,5 +1,5 @@
 baseurl: /
-title: Justin Kracht
+title: Justin Kracht | Blog
 author: Justin Kracht
 canonifyurls: yes
 languagecode: en
@@ -22,7 +22,7 @@ params:
     - python
     - stan
   progressively: no
-  sitename: Justin Kracht | Blog
+  sitename: Justin Kracht
   uselatex: yes
 markup:
   goldmark:
