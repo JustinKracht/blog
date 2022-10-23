@@ -1,0 +1,18 @@
+---
+title: "About"
+image: profile.png
+about:
+  template: jolla
+  links:
+    - icon: linkedin
+      text: LinkedIn
+      href: https://linkedin.com
+    - icon: github
+      text: Github
+      href: https://github.com
+    - icon: mortarboard-fill
+      text: ORCiD
+      href: https://orcid.org/0000-0002-3979-4472
+---
+
+About this blog
