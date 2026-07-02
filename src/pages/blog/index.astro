@@ -1,0 +1,87 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { withBase } from '../../lib/site';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
+---
+
+<BaseLayout title="Blog" description="Writing on psychometrics, people analytics, and statistics.">
+  <section class="wrapper blog-index">
+    <h1>Blog</h1>
+
+    {tags.length > 0 && (
+      <ul class="blog-index__tags">
+        <li><a href={withBase('blog')} aria-current="page">All</a></li>
+        {tags.map((tag) => (
+          <li><a href={withBase(`blog/tags/${tag}`)}>{tag}</a></li>
+        ))}
+      </ul>
+    )}
+
+    {posts.length === 0 && <p>No posts yet.</p>}
+
+    <ul class="blog-index__list">
+      {posts.map((post) => (
+        <li>
+          <a href={withBase(`blog/${post.id}`)}>{post.data.title}</a>
+          <p class="date-stamp">
+            {post.data.date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+          <p class="blog-index__desc">{post.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .blog-index {
+    padding-block: var(--space-6) var(--space-7);
+    max-width: 65ch;
+  }
+
+  .blog-index__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: var(--space-3) 0 var(--space-5);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+  }
+  .blog-index__tags a {
+    display: inline-block;
+    color: var(--color-text);
+    background: var(--color-bg-recessed);
+    padding: 0.15em 0.7em;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+  .blog-index__tags a[aria-current='page'],
+  .blog-index__tags a:hover { color: var(--color-link); }
+
+  .blog-index__list {
+    list-style: none;
+    padding: 0;
+  }
+  .blog-index__list li { margin-bottom: var(--space-4); }
+  .blog-index__list a { font-size: 1.1rem; text-decoration: none; }
+  .blog-index__list a:hover { text-decoration: underline; }
+
+  .blog-index__desc {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    opacity: 0.85;
+    margin-top: var(--space-1);
+  }
+</style>

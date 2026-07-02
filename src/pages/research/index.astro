@@ -1,0 +1,62 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { withBase } from '../../lib/site';
+
+const explainers = (await getCollection('research', ({ data }) => !data.draft)).sort(
+  (a, b) => (a.data.part ?? 0) - (b.data.part ?? 0)
+);
+---
+
+<BaseLayout
+  title="Research"
+  description="Interactive explainers on the geometry of correlation matrices."
+>
+  <section class="wrapper research">
+    <h1>Research</h1>
+    <p class="research__intro">
+      A series of interactive explainers on the geometry of correlation matrices —
+      starting with the elliptope, the convex body every valid correlation matrix
+      lives in, then moving through what happens when estimated matrices fall
+      outside it.
+    </p>
+
+    {explainers.length === 0 && (
+      <p class="research__empty">
+        The first explainer, <em>The Shape of Correlation Matrices</em>, is in
+        progress. Check back soon.
+      </p>
+    )}
+
+    <ul class="research__list">
+      {explainers.map((entry) => (
+        <li>
+          <a href={withBase(`research/${entry.id}`)}>{entry.data.title}</a>
+          <p>{entry.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .research {
+    padding-block: var(--space-6) var(--space-7);
+    max-width: 65ch;
+  }
+
+  .research__intro { font-size: 1.1rem; margin-bottom: var(--space-5); }
+
+  .research__empty {
+    font-family: var(--font-sans);
+    padding: var(--space-4);
+    background: var(--color-bg-recessed);
+    border-radius: var(--radius);
+  }
+
+  .research__list {
+    list-style: none;
+    padding: 0;
+  }
+  .research__list li { margin-bottom: var(--space-4); }
+</style>
