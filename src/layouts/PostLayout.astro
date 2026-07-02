@@ -68,4 +68,9 @@ const dateLabel = date.toLocaleDateString('en-US', {
     text-decoration: none;
   }
   .post__tags a:hover { color: var(--color-link); }
+
+  /* See ExplainerLayout.astro for why this needs display: contents. */
+  .post__body {
+    display: contents;
+  }
 </style>

@@ -1,0 +1,63 @@
+---
+title: "The Shape of Correlation Matrices"
+description: "Symmetric, unit diagonal, entries between −1 and 1 — and still not a valid correlation matrix. What the actual constraint looks like, in three dimensions."
+part: 0
+draft: false
+---
+
+import ElliptopeScene from '../../components/viz/ElliptopeScene.astro';
+import CrossSection from '../../components/viz/CrossSection.astro';
+import EscapeScatter from '../../components/viz/EscapeScatter.astro';
+import Sidenote from '../../components/viz/Sidenote.astro';
+import Citation from '../../components/viz/Citation.astro';
+import Bibliography from '../../components/viz/Bibliography.astro';
+
+Take three variables and write down their pairwise correlations: $r_{12}$, $r_{13}$, $r_{23}$, each somewhere between $-1$ and $1$. Arrange them into a matrix,
+
+$$
+R = \begin{pmatrix} 1 & r_{12} & r_{13} \\ r_{12} & 1 & r_{23} \\ r_{13} & r_{23} & 1 \end{pmatrix}.
+$$
+
+Is that a valid correlation matrix? It's symmetric, the diagonal is 1, every entry is in range. It looks right. It isn't necessarily right.
+
+Try $r_{12} = r_{13} = 0.9$ and $r_{23} = -0.9$: three individually unremarkable correlations, each well inside $[-1, 1]$. Compute the eigenvalues of that matrix and one of them is negative<Sidenote>The eigenvalues are 1.9, 1.9, and −0.8 — they still sum to the trace, 3, which is a good check to run whenever you compute eigenvalues by hand.</Sidenote>. A covariance-type matrix with a negative eigenvalue can't be the covariance — or correlation — of anything. No random vector produces it. Three plausible-looking correlations combined into something that describes no possible relationship between three variables at all.
+
+## The missing constraint
+
+The condition being violated is **positive semidefiniteness**: for every vector $x$, $x^\top R x \ge 0$. It's what makes $R$ a legitimate description of variance — $x^\top R x$ is, up to scale, the variance of $x_1 X_1 + x_2 X_2 + x_3 X_3$ for some random vector $(X_1, X_2, X_3)$ with correlation matrix $R$, and variance can't be negative.
+
+For a $3\times 3$ matrix with unit diagonal, it turns out this collapses to a single extra condition. The $1\times 1$ and $2\times 2$ principal minors are automatically fine — $1 - r_{ij}^2 \ge 0$ whenever $|r_{ij}| \le 1$ — so the only thing that can fail is the full $3 \times 3$ determinant:
+
+$$
+\det(R) = 1 - r_{12}^2 - r_{13}^2 - r_{23}^2 + 2\,r_{12}\,r_{13}\,r_{23} \;\ge\; 0.
+$$
+
+Plug in $(0.9, 0.9, -0.9)$ and you get $1 - 0.81 - 0.81 - 0.81 + 2(0.9)(0.9)(-0.9) = 1 - 2.43 - 1.458 = -2.888$ — comfortably negative, and that single number is the entire story behind the bad eigenvalue above.
+
+## The elliptope
+
+So the set of valid $3\times 3$ correlation matrices is exactly $\{(r_{12}, r_{13}, r_{23}) : \det(R) \ge 0\}$, sitting inside the cube $[-1,1]^3$. Its boundary — $\det(R) = 0$ — is a curved, four-cornered surface. <Citation citeKey="rousseeuw1994" /> call the resulting solid body the **elliptope**. Drag the point below; the matrix and its eigenvalues update live, and the point turns crimson the moment it leaves the valid region.
+
+<ElliptopeScene />
+
+The surface has a clean description. Represent each variable as a unit vector in the plane — $v_i$ at angle $\theta_i$ — and let $r_{ij} = \langle v_i, v_j \rangle = \cos(\theta_i - \theta_j)$. Fixing $\theta_1 = 0$ and sweeping $\theta_2, \theta_3$ over $[0, 2\pi)$ traces out exactly the boundary surface above. That's not a coincidence: a rank-2 correlation matrix is precisely the Gram matrix of unit vectors in a plane, and $\det(R) = 0$ is exactly the rank-deficient case. Everywhere *inside* the elliptope is rank 3 (three genuinely independent directions); everywhere *on* the boundary is rank 2, generically — the three "variables" live in a shared plane, one direction of variation gone.
+
+Rank drops again, to 1, at exactly four points: the vertices, where all three unit vectors coincide or are exact opposites. Rank 1 means perfect linear dependence — every variable is a $\pm$ copy of every other. Those four points are $(1,1,1)$, $(1,-1,-1)$, $(-1,1,-1)$, and $(-1,-1,1)$: the sign patterns that make $r_{ij} = s_i s_j$ for some choice of signs $s_1, s_2, s_3$. Snap to one with the buttons under the figure — the matrix becomes exactly singular, and you're looking at three variables that aren't really three variables at all.
+
+## A cross-section
+
+Fix $r_{23}$ and ask what's left over: which $(r_{12}, r_{13})$ pairs are still consistent with a valid matrix? The determinant inequality, with $r_{23} = c$ held constant, is a quadratic constraint in $(r_{12}, r_{13})$ — an ellipse, with semi-axes $\sqrt{1+c}$ and $\sqrt{1-c}$ along the $\pm 45°$ directions. At $c = 0$ it's a circle of radius 1; as $c \to \pm 1$ it collapses to a line segment. This is the elliptope's whole shape, one slice at a time: fixing one correlation visibly narrows what the other two can be.
+
+<CrossSection />
+
+## Why do we escape?
+
+Every point on and inside the elliptope is a valid correlation matrix — but nothing forces an *estimated* one to land there. The determinant condition is a fact about population parameters; ordinary sample statistics don't know about it and aren't constrained to respect it.
+
+The clearest way this happens: pairwise-complete-data correlations computed from incomplete data. If $r_{12}$, $r_{13}$, and $r_{23}$ get computed from three different, only-partially-overlapping subsets of subjects — because different subjects are missing different variables — there's no mathematical reason for the resulting matrix to be positive semidefinite, even when the true population matrix underneath all of it is comfortably valid. Below, a small simulation<Sidenote>ρ = 0.75, n = 10, 40% missingness — deliberately small, not a specific published result. Code in <code>data-gen/elliptope-escape.R</code>.</Sidenote>: the true matrix is valid, comfortably interior, and a real fraction of the pairwise-complete estimates from it still aren't.
+
+<EscapeScatter />
+
+Pairwise deletion is the easy case to demonstrate — it's just missing data. The harder, more common case is **tetrachoric correlation**: correlations estimated from binary items, which are their own source of instability even with complete data, especially with small samples and extreme item splits. That's the subject of the next piece in this series — including what to do about a matrix that's escaped, since "compute it again more carefully" isn't always an option.
+
+<Bibliography keys={['rousseeuw1994']} />

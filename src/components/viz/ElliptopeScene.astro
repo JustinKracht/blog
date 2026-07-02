@@ -1,0 +1,463 @@
+---
+// Hero three.js figure: the elliptope (boundary det(R) = 0) inside the
+// [-1,1]^3 cube, with a draggable point that live-updates a rendered 3x3
+// matrix and its eigenvalues. Three linked sliders give the same control
+// keyboard-accessibly, and double as the numeric readout.
+//
+// Perf/motion: three.js itself is only fetched (dynamic import) once this
+// component scrolls near the viewport, and rendering is on-demand (no
+// requestAnimationFrame loop, no OrbitControls damping/inertia) rather than
+// a continuous render loop.
+import Slider from './Slider.astro';
+import ButtonGroup from './ButtonGroup.astro';
+
+const vertexOptions = [
+  { label: '(1, 1, 1)', value: '1,1,1' },
+  { label: '(1, −1, −1)', value: '1,-1,-1' },
+  { label: '(−1, 1, −1)', value: '-1,1,-1' },
+  { label: '(−1, −1, 1)', value: '-1,-1,1' },
+];
+---
+
+<div class="elliptope" id="elliptope-scene">
+  <div class="elliptope__canvas-wrap">
+    <canvas
+      id="elliptope-canvas"
+      class="elliptope__canvas"
+      role="img"
+      aria-label="Interactive 3D plot of the elliptope, the set of valid 3x3 correlation matrices, inside the cube [-1,1]^3. Use the sliders below to move the marked point."
+    ></canvas>
+    <p class="elliptope__poster" id="elliptope-poster">Loading 3D figure…</p>
+    <noscript>
+      <p class="elliptope__noscript">
+        This figure is an interactive 3D plot and needs JavaScript. It shows the elliptope — the
+        curved, four-cornered body of valid 3×3 correlation matrices inside the cube [-1,1]³.
+      </p>
+    </noscript>
+  </div>
+
+  <div class="elliptope__panel">
+    <table class="elliptope__matrix" id="elliptope-matrix" aria-label="Current 3x3 matrix">
+      <tbody>
+        <tr><td>1</td><td id="m-r12">0</td><td id="m-r13">0</td></tr>
+        <tr><td id="m-r12b">0</td><td>1</td><td id="m-r23">0</td></tr>
+        <tr><td id="m-r13b">0</td><td id="m-r23b">0</td><td>1</td></tr>
+      </tbody>
+    </table>
+
+    <p class="elliptope__status" id="elliptope-status">Positive semidefinite — a valid correlation matrix.</p>
+    <p class="elliptope__eigenvalues" id="elliptope-eigenvalues"></p>
+
+    <Slider id="elliptope-r12" label="r₁₂" min={-1} max={1} step={0.01} value={0} />
+    <Slider id="elliptope-r13" label="r₁₃" min={-1} max={1} step={0.01} value={0} />
+    <Slider id="elliptope-r23" label="r₂₃" min={-1} max={1} step={0.01} value={0} />
+
+    <p class="elliptope__label">Snap to a vertex (rank 1: perfect linear dependence)</p>
+    <ButtonGroup id="elliptope-vertices" options={vertexOptions} />
+  </div>
+</div>
+
+<style>
+  .elliptope {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: var(--space-5);
+    margin-block: var(--space-6);
+    align-items: start;
+  }
+
+  .elliptope__canvas-wrap {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .elliptope__canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .elliptope__poster {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .elliptope__poster[hidden] { display: none; }
+
+  .elliptope__noscript {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    background: var(--color-bg-raised);
+  }
+
+  .elliptope__panel {
+    font-family: var(--font-sans);
+  }
+
+  .elliptope__matrix {
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    margin-bottom: var(--space-3);
+  }
+  .elliptope__matrix td {
+    border: 1px solid var(--color-rule);
+    padding: 0.4em 0.8em;
+    text-align: center;
+    min-width: 2.5em;
+  }
+  .elliptope__matrix.is-invalid td {
+    border-color: var(--color-crimson);
+    color: var(--color-crimson);
+  }
+
+  .elliptope__status {
+    font-size: 0.85rem;
+    margin-bottom: var(--space-1);
+  }
+  .elliptope__status.is-invalid {
+    color: var(--color-crimson);
+    font-weight: 600;
+  }
+
+  .elliptope__eigenvalues {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin-bottom: var(--space-3);
+  }
+
+  .elliptope__label {
+    font-size: 0.85rem;
+    margin-top: var(--space-3);
+  }
+
+  @media (max-width: 900px) {
+    .elliptope {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import {
+    determinant3,
+    eigenvalues3,
+    ELLIPTOPE_VERTICES,
+    type Corr3,
+  } from '../../lib/correlation3';
+
+  const scene = document.getElementById('elliptope-scene');
+  const canvas = document.getElementById('elliptope-canvas') as HTMLCanvasElement | null;
+  const poster = document.getElementById('elliptope-poster');
+  if (!scene || !canvas) {
+    throw new Error('ElliptopeScene: expected #elliptope-scene and #elliptope-canvas in the DOM');
+  }
+
+  const sliders = {
+    r12: document.getElementById('elliptope-r12') as HTMLInputElement,
+    r13: document.getElementById('elliptope-r13') as HTMLInputElement,
+    r23: document.getElementById('elliptope-r23') as HTMLInputElement,
+  };
+  const outputs = {
+    r12: document.getElementById('elliptope-r12-output'),
+    r13: document.getElementById('elliptope-r13-output'),
+    r23: document.getElementById('elliptope-r23-output'),
+  };
+  const matrixEl = document.getElementById('elliptope-matrix');
+  const statusEl = document.getElementById('elliptope-status');
+  const eigenEl = document.getElementById('elliptope-eigenvalues');
+  const cells = {
+    r12: [document.getElementById('m-r12'), document.getElementById('m-r12b')],
+    r13: [document.getElementById('m-r13'), document.getElementById('m-r13b')],
+    r23: [document.getElementById('m-r23'), document.getElementById('m-r23b')],
+  };
+
+  let current: Corr3 = { r12: 0, r13: 0, r23: 0 };
+  let onPointMoved: ((v: Corr3) => void) | null = null;
+
+  function fmt(x: number): string {
+    return x.toFixed(2);
+  }
+
+  function updateReadouts(v: Corr3, { syncSliders = true } = {}) {
+    current = v;
+
+    if (syncSliders) {
+      sliders.r12.value = String(v.r12);
+      sliders.r13.value = String(v.r13);
+      sliders.r23.value = String(v.r23);
+    }
+    if (outputs.r12) outputs.r12.textContent = `${fmt(v.r12)}`;
+    if (outputs.r13) outputs.r13.textContent = `${fmt(v.r13)}`;
+    if (outputs.r23) outputs.r23.textContent = `${fmt(v.r23)}`;
+
+    cells.r12.forEach((el) => el && (el.textContent = fmt(v.r12)));
+    cells.r13.forEach((el) => el && (el.textContent = fmt(v.r13)));
+    cells.r23.forEach((el) => el && (el.textContent = fmt(v.r23)));
+
+    const eig = eigenvalues3(v);
+    const valid = determinant3(v) >= -1e-9 && eig.every((e) => e >= -1e-9);
+
+    matrixEl?.classList.toggle('is-invalid', !valid);
+    statusEl?.classList.toggle('is-invalid', !valid);
+    if (statusEl) {
+      statusEl.textContent = valid
+        ? 'Positive semidefinite — a valid correlation matrix.'
+        : 'Not positive semidefinite — this is not a valid correlation matrix.';
+    }
+    if (eigenEl) {
+      eigenEl.textContent = `eigenvalues: ${eig.map(fmt).join(', ')}`;
+    }
+  }
+
+  updateReadouts(current);
+
+  function handleSliderInput() {
+    const v: Corr3 = {
+      r12: Number(sliders.r12.value),
+      r13: Number(sliders.r13.value),
+      r23: Number(sliders.r23.value),
+    };
+    updateReadouts(v, { syncSliders: false });
+    onPointMoved?.(v);
+  }
+  sliders.r12.addEventListener('input', handleSliderInput);
+  sliders.r13.addEventListener('input', handleSliderInput);
+  sliders.r23.addEventListener('input', handleSliderInput);
+
+  const vertexGroup = document.getElementById('elliptope-vertices');
+  vertexGroup?.addEventListener('buttongroup:select', (event) => {
+    const { value } = (event as CustomEvent).detail as { value: string };
+    const [r12, r13, r23] = value.split(',').map(Number);
+    const v = ELLIPTOPE_VERTICES.find(
+      (candidate) => candidate.r12 === r12 && candidate.r13 === r13 && candidate.r23 === r23
+    ) ?? { r12, r13, r23 };
+    updateReadouts(v);
+    onPointMoved?.(v);
+  });
+
+  async function start3D() {
+    const THREE = await import('three');
+    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
+
+    poster?.setAttribute('hidden', '');
+
+    const width = canvas!.clientWidth;
+    const height = canvas!.clientHeight;
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas!, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(width, height, false);
+
+    const threeScene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    camera.position.set(2.3, 1.7, 2.4);
+    camera.lookAt(0, 0, 0);
+
+    threeScene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const directional = new THREE.DirectionalLight(0xffffff, 0.9);
+    directional.position.set(3, 4, 2);
+    threeScene.add(directional);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+    fillLight.position.set(-3, -2, -1);
+    threeScene.add(fillLight);
+
+    // Boundary surface: rank <= 2 correlation matrices are Gram matrices of
+    // unit vectors in the plane, r_ij = cos(theta_i - theta_j). Fixing
+    // theta_1 = 0 and sweeping theta_2, theta_3 over [0, 2*pi) traces the
+    // full boundary (see src/lib/correlation3.ts and the explainer prose).
+    const segments = 90;
+    const positions: number[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const theta2 = (i / segments) * Math.PI * 2;
+      for (let j = 0; j <= segments; j++) {
+        const theta3 = (j / segments) * Math.PI * 2;
+        positions.push(Math.cos(theta2), Math.cos(theta3), Math.cos(theta2 - theta3));
+      }
+    }
+    const indices: number[] = [];
+    const cols = segments + 1;
+    for (let i = 0; i < segments; i++) {
+      for (let j = 0; j < segments; j++) {
+        const a = i * cols + j;
+        const b = a + 1;
+        const c = a + cols;
+        const d = c + 1;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+    const surfaceGeometry = new THREE.BufferGeometry();
+    surfaceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    surfaceGeometry.setIndex(indices);
+    surfaceGeometry.computeVertexNormals();
+
+    const surfaceMaterial = new THREE.MeshStandardMaterial({
+      color: 0x842b32,
+      metalness: 0.05,
+      roughness: 0.55,
+      transparent: true,
+      opacity: 0.82,
+      side: THREE.DoubleSide,
+    });
+    const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+    threeScene.add(surface);
+
+    const wireframe = new THREE.LineSegments(
+      new THREE.WireframeGeometry(surfaceGeometry),
+      new THREE.LineBasicMaterial({ color: 0x6a2228, transparent: true, opacity: 0.12 })
+    );
+    threeScene.add(wireframe);
+
+    const cube = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2)),
+      new THREE.LineBasicMaterial({ color: 0x33566b, transparent: true, opacity: 0.4 })
+    );
+    threeScene.add(cube);
+
+    const markerGeometry = new THREE.SphereGeometry(0.05, 24, 24);
+    const validColor = new THREE.Color(0xa38044);
+    const invalidColor = new THREE.Color(0xcc4444);
+    const markerMaterial = new THREE.MeshStandardMaterial({ color: validColor });
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    threeScene.add(marker);
+
+    function setMarkerPosition(v: Corr3) {
+      marker.position.set(v.r12, v.r13, v.r23);
+      const valid = eigenvalues3(v).every((e) => e >= -1e-9);
+      markerMaterial.color.copy(valid ? validColor : invalidColor);
+      render();
+    }
+    setMarkerPosition(current);
+    onPointMoved = setMarkerPosition;
+
+    function render() {
+      renderer.render(threeScene, camera);
+    }
+
+    const controls = new OrbitControls(camera, canvas!);
+    controls.enableDamping = false;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 8;
+    controls.addEventListener('change', render);
+
+    // Drag the marker: pointerdown near its projected screen position
+    // starts a drag on a camera-facing plane through the marker; otherwise
+    // the pointer falls through to OrbitControls as an orbit gesture.
+    const raycaster = new THREE.Raycaster();
+    const dragPlane = new THREE.Plane();
+    const planeHit = new THREE.Vector3();
+    let dragging = false;
+
+    function pointerToNDC(event: PointerEvent) {
+      const rect = canvas!.getBoundingClientRect();
+      return new THREE.Vector2(
+        ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      );
+    }
+
+    function screenDistanceToMarker(event: PointerEvent): number {
+      const rect = canvas!.getBoundingClientRect();
+      const projected = marker.position.clone().project(camera);
+      const screenX = (projected.x * 0.5 + 0.5) * rect.width;
+      const screenY = (-projected.y * 0.5 + 0.5) * rect.height;
+      const dx = event.clientX - rect.left - screenX;
+      const dy = event.clientY - rect.top - screenY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    canvas!.addEventListener('pointerdown', (event) => {
+      if (screenDistanceToMarker(event) > 24) return;
+      dragging = true;
+      controls.enabled = false;
+      canvas!.setPointerCapture(event.pointerId);
+      canvas!.style.cursor = 'grabbing';
+
+      const cameraDir = new THREE.Vector3();
+      camera.getWorldDirection(cameraDir);
+      dragPlane.setFromNormalAndCoplanarPoint(cameraDir, marker.position);
+    });
+
+    canvas!.addEventListener('pointermove', (event) => {
+      if (!dragging) return;
+      raycaster.setFromCamera(pointerToNDC(event), camera);
+      if (!raycaster.ray.intersectPlane(dragPlane, planeHit)) return;
+
+      const v: Corr3 = {
+        r12: Math.max(-1, Math.min(1, planeHit.x)),
+        r13: Math.max(-1, Math.min(1, planeHit.y)),
+        r23: Math.max(-1, Math.min(1, planeHit.z)),
+      };
+      updateReadouts(v);
+      setMarkerPosition(v);
+    });
+
+    function endDrag(event: PointerEvent) {
+      if (!dragging) return;
+      dragging = false;
+      controls.enabled = true;
+      canvas!.style.cursor = 'grab';
+      try {
+        canvas!.releasePointerCapture(event.pointerId);
+      } catch {
+        // pointer capture already released — fine.
+      }
+    }
+    canvas!.addEventListener('pointerup', endDrag);
+    canvas!.addEventListener('pointercancel', endDrag);
+
+    function handleResize() {
+      const w = canvas!.clientWidth;
+      const h = canvas!.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+      render();
+    }
+    window.addEventListener('resize', handleResize);
+
+    render();
+  }
+
+  function initWhenVisible() {
+    let started = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !started) {
+            started = true;
+            observer.disconnect();
+            start3D();
+          }
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(scene!);
+  }
+
+  initWhenVisible();
+</script>

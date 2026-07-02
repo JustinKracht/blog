@@ -1,5 +1,13 @@
 /* Distill/Tufte-style content grid: narrow prose column, breakout figures,
-   margin notes on wide screens. Used inside Post/Explainer layouts. */
+   margin notes on wide screens. Used inside Post/Explainer layouts.
+
+   Selectors below match both `.content-grid > *` (true direct children,
+   e.g. a layout's header) and `.content-grid > * > *` (one level down,
+   e.g. MDX/markdown content rendered inside a `display: contents` prose
+   wrapper). `display: contents` makes those grandchildren *lay out* as if
+   they were direct grid children, but CSS selectors still see the real DOM
+   — `.content-grid > *` alone never matches them, so both patterns are
+   needed. */
 
 .content-grid {
   --gap: var(--space-4);
@@ -11,18 +19,21 @@
   column-gap: var(--gap);
 }
 
-.content-grid > * {
+.content-grid > *,
+.content-grid > * > * {
   grid-column: 2;
 }
 
-.content-grid > .breakout {
+.content-grid > .breakout,
+.content-grid > * > .breakout {
   grid-column: 1 / -1;
   width: 100%;
   max-width: var(--measure-wide);
   justify-self: center;
 }
 
-.content-grid > .margin-note {
+.content-grid > .margin-note,
+.content-grid > * > .margin-note {
   grid-column: 3;
   grid-row: auto;
   font-family: var(--font-sans);
@@ -38,7 +49,8 @@
   .content-grid {
     grid-template-columns: 1fr min(var(--measure), 100% - 2 * var(--space-4)) 1fr;
   }
-  .content-grid > .margin-note {
+  .content-grid > .margin-note,
+  .content-grid > * > .margin-note {
     grid-column: 2;
     grid-row: auto;
     border-left: 2px solid var(--color-accent-decorative);

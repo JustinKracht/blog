@@ -23,9 +23,19 @@ placeholder with only a `jsonlite` dependency, and no R installation was
 available in the environment this skeleton was built in to generate one
 honestly — don't hand-write a lockfile; let `renv` produce it.
 
-## Example
+## Scripts
 
-`example.R` computes eigenvalues for a family of 3×3 equicorrelation
-matrices (`R = (1 - ρ)·I + ρ·J`) and writes `public/data/example-eigenvalues.json`,
-just to exercise the pipeline end to end. It's consumed by the primitive
-demo page at `/research/demo`.
+- `example.R` computes eigenvalues for a family of 3×3 equicorrelation
+  matrices (`R = (1 - ρ)·I + ρ·J`) and writes `public/data/example-eigenvalues.json`,
+  just to exercise the pipeline end to end. Consumed by `/research/demo`.
+- `elliptope-escape.R` simulates small, MCAR-missing trivariate normal
+  samples and computes pairwise-complete-data sample correlations, some of
+  which land outside the elliptope — the "why do we escape" figure in
+  `/research/elliptope`. Writes `public/data/elliptope-escape.json`.
+
+Both committed JSON files were produced by equivalent Node scripts, not by
+running these `.R` files, since no R installation was available in the
+environment this was built in — see the header comment in each `.R` file
+for specifics. Re-running the real R script will reproduce the same
+*qualitative* result (same method, same seed where it matters) but not
+bit-identical output, since R's RNG stream differs from Node's.
