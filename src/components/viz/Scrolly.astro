@@ -1,0 +1,91 @@
+---
+// Scroll-driven step primitive. Put the visualization in the `graphic`
+// slot and a series of <ScrollyStep> elements in the `steps` slot; as each
+// step crosses the viewport center, the container fires a `scrolly:step`
+// CustomEvent (detail: { index }) that the graphic's own script can listen
+// for to update state.
+//
+// Reduced motion / narrow screens: the sticky pinning is dropped entirely
+// (CSS below) so the graphic renders once inline and steps read as normal
+// prose — no separate content authoring needed for the fallback.
+---
+
+<div class="scrolly">
+  <div class="scrolly__steps">
+    <slot name="steps" />
+  </div>
+  <div class="scrolly__sticky">
+    <slot name="graphic" />
+  </div>
+</div>
+
+<style>
+  .scrolly {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    margin-block: var(--space-6);
+    align-items: start;
+  }
+
+  .scrolly__sticky {
+    position: sticky;
+    top: 12vh;
+    height: 66vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scrolly__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 60vh;
+    padding-block: 20vh;
+  }
+
+  @media (max-width: 900px), (prefers-reduced-motion: reduce) {
+    .scrolly {
+      grid-template-columns: 1fr;
+    }
+    .scrolly__sticky {
+      position: static;
+      height: auto;
+      margin-bottom: var(--space-4);
+    }
+    .scrolly__steps {
+      gap: var(--space-4);
+      padding-block: 0;
+    }
+  }
+</style>
+
+<script>
+  function initScrollies() {
+    document.querySelectorAll<HTMLElement>('.scrolly').forEach((container) => {
+      if (container.dataset.scrollyBound) return;
+      container.dataset.scrollyBound = 'true';
+
+      const steps = Array.from(container.querySelectorAll<HTMLElement>('.scrolly-step'));
+      if (steps.length === 0) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const index = steps.indexOf(entry.target as HTMLElement);
+            steps.forEach((step) => step.classList.remove('is-active'));
+            entry.target.classList.add('is-active');
+            container.dispatchEvent(new CustomEvent('scrolly:step', { detail: { index } }));
+          }
+        },
+        { rootMargin: '-45% 0px -45% 0px', threshold: 0 }
+      );
+
+      steps.forEach((step) => observer.observe(step));
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initScrollies);
+  initScrollies();
+</script>

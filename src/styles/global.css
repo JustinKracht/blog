@@ -50,3 +50,15 @@ main { flex: 1; }
   overflow-y: hidden;
   padding: 0.2em 0;
 }
+
+/* Blanket motion kill switch. Component-level JS should still check
+   prefersReducedMotion() (src/lib/motion.ts) before starting anything
+   scroll-driven or canvas/WebGL-animated, since this can't reach those. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

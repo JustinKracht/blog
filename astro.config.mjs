@@ -15,7 +15,10 @@ export default defineConfig({
   trailingSlash: 'never',
   integrations: [
     mdx(),
-    sitemap(),
+    sitemap({
+      // /research/demo is a component-library reference page, not content.
+      filter: (page) => !page.includes('/research/demo'),
+    }),
   ],
   markdown: {
     processor: unified({

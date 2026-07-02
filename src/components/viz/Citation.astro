@@ -1,0 +1,55 @@
+---
+import { getReference, formatShortCitation, formatFullCitation } from '../../lib/bib';
+
+interface Props {
+  citeKey: string;
+}
+
+const { citeKey } = Astro.props;
+const ref = getReference(citeKey);
+---
+
+<a
+  href={`#ref-${ref.key}`}
+  class="citation"
+  data-tooltip={formatFullCitation(ref)}
+  title={formatFullCitation(ref)}
+>{formatShortCitation(ref)}</a>
+
+<style>
+  .citation {
+    position: relative;
+    text-decoration: none;
+    border-bottom: 1px dotted var(--color-link);
+  }
+
+  .citation::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.4em);
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 280px;
+    background: var(--color-iron-gall);
+    color: var(--color-parchment);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    padding: 0.5em 0.7em;
+    border-radius: var(--radius);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+    z-index: 40;
+  }
+
+  .citation:hover::after,
+  .citation:focus-visible::after {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .citation::after { transition: none; }
+  }
+</style>

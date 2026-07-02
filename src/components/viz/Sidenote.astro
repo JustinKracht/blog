@@ -1,0 +1,110 @@
+---
+// Distill/Tufte-style sidenote, meant to sit inline mid-sentence inside a
+// <p>. Deliberately built from <span>/<button> only (phrasing content) —
+// <details> looks like the obvious choice but is flow content, and a
+// browser's HTML parser implicitly closes an ancestor <p> the moment it
+// sees one, silently hoisting it out of the sentence.
+//
+// No-JS fallback: renders as a plain, always-visible parenthetical (no
+// toggle button, nothing hidden). With JS: a shared script (loaded once by
+// ExplainerLayout) turns it into a tap-to-expand footnote on narrow
+// screens, or an always-open floated margin note on wide screens.
+// Numbering is CSS counter-based — reset `counter-reset: sidenote` on an
+// ancestor (ExplainerLayout does this on .explainer__body).
+---
+
+<span class="sidenote js-sidenote">
+  <button type="button" class="sidenote__marker" aria-expanded="true" aria-label="Note" hidden>
+    <span class="sidenote__num" aria-hidden="true"></span>
+  </button>
+  <span class="sidenote__body margin-note"><slot /></span>
+</span>
+
+<style>
+  .sidenote {
+    display: inline;
+  }
+
+  .sidenote__marker {
+    font: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--color-accent-text);
+  }
+
+  .sidenote__num::before {
+    content: counter(sidenote);
+    counter-increment: sidenote;
+    vertical-align: super;
+    font-size: 0.7em;
+    font-family: var(--font-sans);
+    margin-inline: 0.1em;
+  }
+
+  .sidenote__body {
+    display: inline;
+    margin-top: 0;
+    margin-inline-start: 0.3em;
+  }
+
+  /* Promoted to a floating margin note on wide screens */
+  .sidenote.sidenote--pinned {
+    display: block;
+    float: right;
+    clear: right;
+    width: 200px;
+    margin-right: calc(-1 * (200px + var(--space-5)));
+    margin-top: 0.2em;
+  }
+  .sidenote.sidenote--pinned .sidenote__body {
+    display: block;
+    margin-inline-start: 0;
+  }
+
+  /* Collapsed tap-to-expand state on narrow screens (JS-driven) */
+  .sidenote__body[hidden] {
+    display: none;
+  }
+</style>
+
+<script>
+  const WIDE_QUERY = '(min-width: 1300px)';
+
+  function layoutSidenote(el: HTMLElement) {
+    const button = el.querySelector<HTMLButtonElement>('.sidenote__marker');
+    const body = el.querySelector<HTMLElement>('.sidenote__body');
+    if (!button || !body) return;
+
+    const wide = window.matchMedia(WIDE_QUERY).matches;
+    el.classList.toggle('sidenote--pinned', wide);
+
+    if (wide) {
+      button.hidden = true;
+      body.hidden = false;
+    } else {
+      button.hidden = false;
+      if (!button.dataset.bound) {
+        button.dataset.bound = 'true';
+        button.setAttribute('aria-expanded', 'false');
+        body.hidden = true;
+        button.addEventListener('click', () => {
+          const expanded = button.getAttribute('aria-expanded') === 'true';
+          button.setAttribute('aria-expanded', String(!expanded));
+          body.hidden = expanded;
+        });
+      }
+    }
+  }
+
+  function layoutAllSidenotes() {
+    document.querySelectorAll<HTMLElement>('.js-sidenote').forEach(layoutSidenote);
+  }
+
+  if (!document.body.dataset.sidenoteLayoutBound) {
+    document.body.dataset.sidenoteLayoutBound = 'true';
+    window.addEventListener('resize', layoutAllSidenotes);
+  }
+  layoutAllSidenotes();
+</script>
