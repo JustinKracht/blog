@@ -1,0 +1,62 @@
+---
+// Labeled range control with a live value readout. Native <input
+// type="range"> under the hood, so it's keyboard-operable and focusable
+// for free. Viz components listen for `input` events on
+// document.getElementById(id) to react to changes.
+interface Props {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step?: number;
+  value: number;
+  unit?: string;
+}
+
+const { id, label, min, max, step = 1, value, unit = '' } = Astro.props;
+---
+
+<div class="control-slider">
+  <div class="control-slider__row">
+    <label for={id}>{label}</label>
+    <output for={id} id={`${id}-output`}>{value}{unit}</output>
+  </div>
+  <input type="range" id={id} min={min} max={max} step={step} value={value} data-unit={unit} />
+</div>
+
+<style>
+  .control-slider {
+    font-family: var(--font-sans);
+    margin-block: var(--space-3);
+  }
+
+  .control-slider__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-1);
+  }
+
+  .control-slider__row output {
+    font-family: var(--font-mono);
+    color: var(--color-crimson);
+  }
+
+  .control-slider input[type='range'] {
+    width: 100%;
+    accent-color: var(--color-crimson);
+    height: 1.2rem;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLInputElement>('.control-slider input[type="range"]').forEach((input) => {
+    if (input.dataset.sliderBound) return;
+    input.dataset.sliderBound = 'true';
+    const output = document.getElementById(`${input.id}-output`);
+    if (!output) return;
+    input.addEventListener('input', () => {
+      output.textContent = `${input.value}${input.dataset.unit ?? ''}`;
+    });
+  });
+</script>

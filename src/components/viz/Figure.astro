@@ -1,0 +1,30 @@
+---
+// Breaks out of the prose measure onto the wide-figure grid track. Pass
+// `wide` for figures that should use the full ~1100px breakout width;
+// omit it for a figure that should stay within the text column.
+interface Props {
+  wide?: boolean;
+  caption?: string;
+}
+
+const { wide = false, caption } = Astro.props;
+---
+
+<figure class={wide ? 'breakout' : undefined}>
+  <slot />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  figure {
+    margin-block: var(--space-5);
+  }
+  figure.breakout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  figure.breakout figcaption {
+    max-width: var(--measure);
+  }
+</style>

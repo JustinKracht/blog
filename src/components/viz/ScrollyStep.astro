@@ -1,0 +1,30 @@
+---
+// A single text step inside <Scrolly>'s `steps` slot. Gets an `is-active`
+// class from Scrolly's script while it's the current step.
+---
+
+<div class="scrolly-step">
+  <slot />
+</div>
+
+<style>
+  .scrolly-step {
+    max-width: 340px;
+    background: var(--color-bg-raised);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    opacity: 0.55;
+  }
+
+  .scrolly-step.is-active {
+    opacity: 1;
+    border-color: var(--color-accent-decorative);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .scrolly-step {
+      transition: opacity 0.2s ease, border-color 0.2s ease;
+    }
+  }
+</style>
