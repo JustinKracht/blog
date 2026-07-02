@@ -53,6 +53,7 @@ const ogImage = withBase(`og/research/${slug}.png`);
 
   .explainer {
     padding-block: var(--space-6) var(--space-7);
+    counter-reset: sidenote;
   }
 
   .explainer__header {
@@ -67,8 +68,13 @@ const ogImage = withBase(`og/research/${slug}.png`);
     opacity: 0.85;
   }
 
+  /* Its own box disappears from the grid so MDX content's top-level
+     elements (including anything with .breakout) become direct children
+     of .content-grid and can actually reach the wide/margin tracks —
+     otherwise everything rendered here would be stuck one level too deep
+     to ever match `.content-grid > .breakout`. */
   .explainer__body {
-    counter-reset: sidenote;
+    display: contents;
   }
 </style>
 

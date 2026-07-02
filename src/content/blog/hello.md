@@ -35,7 +35,7 @@ cor_matrix <- matrix(
 )
 
 eigen(cor_matrix)$values
-#> [1]  2.2360680  0.7639320 -0.9999999
+#> [1]  1.9  1.9 -0.8
 ```
 
 That third eigenvalue being negative means this isn't a valid correlation

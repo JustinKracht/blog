@@ -29,10 +29,11 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
   <section class="wrapper featured">
     <h2>Research</h2>
     <p>
-      A series on the geometry of correlation matrices is in progress, starting with
-      an interactive explainer on the elliptope. Coming soon.
+      A series on the geometry of correlation matrices, starting with an interactive
+      explainer on the elliptope — the curved, four-cornered body every valid 3×3
+      correlation matrix lives inside.
     </p>
-    <p><a href={withBase('research')}>See the series index &rarr;</a></p>
+    <p><a href={withBase('research/elliptope')}>The Shape of Correlation Matrices &rarr;</a></p>
   </section>
 
   {posts.length > 0 && (

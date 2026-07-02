@@ -1,0 +1,127 @@
+---
+// "Why do we escape?" — small multiples of a pairwise-complete-data
+// simulation (data-gen/elliptope-escape.R), fully static: computed once at
+// build time from committed JSON, rendered as plain SVG. No client JS.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+interface Point {
+  r12: number;
+  r13: number;
+  r23: number;
+  valid: boolean;
+}
+interface Payload {
+  trueRho: number;
+  nSubjects: number;
+  missingProb: number;
+  points: Point[];
+}
+
+const dataPath = join(process.cwd(), 'public/data/elliptope-escape.json');
+const data: Payload = JSON.parse(readFileSync(dataPath, 'utf-8'));
+
+const size = 160;
+const pad = 14;
+const scale = (size - 2 * pad) / 2;
+const toXY = (a: number, b: number) => ({
+  x: pad + scale * (a + 1),
+  y: size - (pad + scale * (b + 1)),
+});
+
+type CoordKey = 'r12' | 'r13' | 'r23';
+const panels: { label: string; a: CoordKey; b: CoordKey }[] = [
+  { label: 'r₁₂ vs r₁₃', a: 'r12', b: 'r13' },
+  { label: 'r₁₂ vs r₂₃', a: 'r12', b: 'r23' },
+  { label: 'r₁₃ vs r₂₃', a: 'r13', b: 'r23' },
+];
+
+const escapeCount = data.points.filter((p) => !p.valid).length;
+const escapePct = Math.round((escapeCount / data.points.length) * 100);
+---
+
+<div class="escape-scatter">
+  <p class="escape-scatter__summary">
+    {escapeCount} of {data.points.length} replications ({escapePct}%) produced an invalid matrix —
+    from a true population correlation of ρ&nbsp;=&nbsp;{data.trueRho}, {data.nSubjects} subjects
+    per replication, {Math.round(data.missingProb * 100)}% missingness on two of the three
+    variables, and ordinary pairwise-complete-data correlations.
+  </p>
+  <div class="escape-scatter__panels">
+    {panels.map((panel) => (
+      <figure>
+        <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`Scatter of ${panel.label} across simulation replications`}>
+          <rect x={pad} y={pad} width={size - 2 * pad} height={size - 2 * pad} fill="none" stroke="var(--color-hairline)" />
+          {data.points.map((point) => {
+            const { x, y } = toXY(point[panel.a], point[panel.b]);
+            return (
+              <circle
+                cx={x}
+                cy={y}
+                r="2.6"
+                fill={point.valid ? 'var(--color-fig-secondary)' : 'var(--color-fig-primary)'}
+                fill-opacity={point.valid ? 0.5 : 0.85}
+              />
+            );
+          })}
+        </svg>
+        <figcaption>{panel.label}</figcaption>
+      </figure>
+    ))}
+  </div>
+  <p class="escape-scatter__legend">
+    <span class="escape-scatter__swatch escape-scatter__swatch--valid"></span> valid (PSD)
+    &nbsp;&nbsp;
+    <span class="escape-scatter__swatch escape-scatter__swatch--invalid"></span> escaped the elliptope
+  </p>
+</div>
+
+<style>
+  .escape-scatter {
+    margin-block: var(--space-5);
+  }
+
+  .escape-scatter__summary {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-3);
+  }
+
+  .escape-scatter__panels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    justify-content: center;
+  }
+
+  .escape-scatter__panels svg {
+    width: 160px;
+    height: 160px;
+    background: var(--color-bg-raised);
+    border-radius: var(--radius);
+  }
+
+  .escape-scatter__panels figcaption {
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    margin-top: var(--space-1);
+  }
+
+  .escape-scatter__legend {
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    margin-top: var(--space-3);
+  }
+
+  .escape-scatter__swatch {
+    display: inline-block;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+  .escape-scatter__swatch--valid { background: var(--color-fig-secondary); opacity: 0.5; }
+  .escape-scatter__swatch--invalid { background: var(--color-fig-primary); opacity: 0.85; }
+</style>
