@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { withBase } from '../../../lib/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      posts: posts
+        .filter((post) => post.data.tags.includes(tag))
+        .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+    },
+  }));
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout title={`Tag: ${tag}`} description={`Posts tagged "${tag}".`}>
+  <section class="wrapper blog-index">
+    <h1>Tag: {tag}</h1>
+    <p><a href={withBase('blog')}>&larr; All posts</a></p>
+    <ul class="blog-index__list">
+      {posts.map((post) => (
+        <li>
+          <a href={withBase(`blog/${post.id}`)}>{post.data.title}</a>
+          <p class="date-stamp">
+            {post.data.date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+          <p class="blog-index__desc">{post.data.description}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .blog-index { padding-block: var(--space-6) var(--space-7); max-width: 65ch; }
+  .blog-index__list { list-style: none; padding: 0; margin-top: var(--space-4); }
+  .blog-index__list li { margin-bottom: var(--space-4); }
+  .blog-index__list a { font-size: 1.1rem; text-decoration: none; }
+  .blog-index__list a:hover { text-decoration: underline; }
+  .blog-index__desc { font-family: var(--font-sans); font-size: 0.9rem; opacity: 0.85; margin-top: var(--space-1); }
+</style>

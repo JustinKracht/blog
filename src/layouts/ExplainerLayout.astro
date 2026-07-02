@@ -1,0 +1,84 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { withBase } from '../lib/site';
+
+interface Props {
+  title: string;
+  description: string;
+  part?: number;
+  slug: string;
+}
+
+const { title, description, part, slug } = Astro.props;
+const ogImage = withBase(`og/research/${slug}.png`);
+---
+
+<BaseLayout title={title} description={description} image={ogImage} type="article">
+  <div class="reading-progress" role="presentation">
+    <div class="reading-progress__bar" id="reading-progress-bar"></div>
+  </div>
+  <article class="content-grid explainer">
+    <header class="explainer__header">
+      {part !== undefined && <p class="date-stamp">Part {part}</p>}
+      <h1>{title}</h1>
+      <p class="explainer__description">{description}</p>
+    </header>
+    <div class="explainer__body">
+      <slot />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .reading-progress {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    height: 3px;
+    background: transparent;
+  }
+
+  .reading-progress__bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-link);
+    transform-origin: left;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .reading-progress__bar {
+      transition: width 0.1s linear;
+    }
+  }
+
+  .explainer {
+    padding-block: var(--space-6) var(--space-7);
+  }
+
+  .explainer__header {
+    margin-bottom: var(--space-5);
+  }
+
+  .explainer__header h1 { margin-bottom: var(--space-2); }
+
+  .explainer__description {
+    font-family: var(--font-sans);
+    font-size: 1.1rem;
+    opacity: 0.85;
+  }
+</style>
+
+<script>
+  const bar = document.getElementById('reading-progress-bar');
+  if (bar) {
+    const update = () => {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - doc.clientHeight;
+      const progress = scrollable > 0 ? (doc.scrollTop / scrollable) * 100 : 0;
+      bar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    };
+    document.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+</script>

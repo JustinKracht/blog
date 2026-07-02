@@ -1,0 +1,63 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SOCIAL_LINKS } from '../lib/site';
+import profilePhoto from '../assets/profile.png';
+---
+
+<BaseLayout
+  title="About"
+  description="Justin Kracht — psychometrics, people analytics, and correlation-matrix geometry."
+>
+  <section class="wrapper about">
+    <Image src={profilePhoto} alt="Justin Kracht" class="about__photo" width={240} height={240} />
+    <h1>About</h1>
+    <!--
+      Placeholder bio — replace with Justin's own voice per the build plan
+      (§11: "a short bio in your own voice, the About page shouldn't read
+      like a CV"). Source facts only: psychometrics + people analytics,
+      based in Oslo.
+    -->
+    <p>
+      I'm a psychometrician working in people analytics, currently based in Oslo,
+      Norway. My background is in quantitative psychology — measurement theory,
+      factor analysis, and the statistics of correlation matrices — and I now apply
+      that background to problems in workplace measurement and evaluation.
+    </p>
+    <p>
+      This site is where I write about that work: interactive explainers on the
+      geometry underlying correlation-matrix methods, and occasional posts on
+      psychometrics, people analytics, and the statistics in between.
+    </p>
+    <p>
+      <em>[Placeholder — replace with a bio in your own voice.]</em>
+    </p>
+    <ul class="about__links">
+      {SOCIAL_LINKS.map((link) => (
+        <li><a href={link.href} rel="me noopener noreferrer" target="_blank">{link.label}</a></li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .about {
+    padding-block: var(--space-6) var(--space-7);
+    max-width: 65ch;
+  }
+
+  .about__photo {
+    border-radius: 6px;
+    margin-bottom: var(--space-4);
+    object-fit: cover;
+  }
+
+  .about__links {
+    display: flex;
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-4);
+    font-family: var(--font-sans);
+  }
+</style>

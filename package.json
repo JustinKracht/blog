@@ -1,0 +1,35 @@
+{
+  "name": "blog",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/markdown-remark": "^7.2.0",
+    "@astrojs/mdx": "^7.0.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.3",
+    "@fontsource-variable/andada-pro": "^5.2.8",
+    "@fontsource/alegreya-sans": "^5.2.8",
+    "@fontsource/alegreya-sans-sc": "^5.2.7",
+    "@fontsource/andada-pro": "^5.2.8",
+    "@fontsource/fira-code": "^5.2.7",
+    "@resvg/resvg-js": "^2.6.2",
+    "astro": "^7.0.5",
+    "katex": "^0.17.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "satori": "^0.26.0",
+    "sharp": "^0.35.3",
+    "typescript": "^6.0.3"
+  }
+}

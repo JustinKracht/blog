@@ -1,0 +1,65 @@
+/* Design tokens — "University Library" palette + type + spacing scale. */
+
+:root {
+  /* Color */
+  --color-parchment: #f5f2eb;
+  --color-parchment-raised: #fbf9f4;
+  --color-parchment-recessed: #ece7db;
+  --color-iron-gall: #2b2523;
+  --color-crimson: #842b32;
+  --color-crimson-pressed: #6a2228;
+  --color-gold: #a38044;
+  --color-ochre: #7f6230;
+  --color-hairline: #dad3c3;
+  --color-petrol: #33566b;
+
+  /* Semantic */
+  --color-bg: var(--color-parchment);
+  --color-bg-raised: var(--color-parchment-raised);
+  --color-bg-recessed: var(--color-parchment-recessed);
+  --color-text: var(--color-iron-gall);
+  --color-link: var(--color-crimson);
+  --color-link-hover: var(--color-crimson-pressed);
+  --color-rule: var(--color-hairline);
+  --color-accent-decorative: var(--color-gold);
+  --color-accent-text: var(--color-ochre);
+  --color-secondary-data: var(--color-petrol);
+
+  /* Figure palette (independent of R defaults) */
+  --color-fig-primary: var(--color-crimson);
+  --color-fig-secondary: var(--color-petrol);
+  --color-fig-tertiary: var(--color-ochre);
+
+  /* Type */
+  --font-serif: 'Andada Pro Variable', 'Andada Pro', Georgia, serif;
+  --font-sans: 'Alegreya Sans', system-ui, sans-serif;
+  --font-sans-sc: 'Alegreya Sans SC', 'Alegreya Sans', system-ui, sans-serif;
+  --font-mono: 'Fira Code', 'JetBrains Mono', ui-monospace, monospace;
+
+  --measure: 68ch;
+  --measure-wide: 1100px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --space-6: 4rem;
+  --space-7: 6rem;
+
+  --radius: 3px;
+
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-scale: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --motion-scale: 1;
+  }
+}

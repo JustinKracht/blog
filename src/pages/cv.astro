@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { withBase } from '../lib/site';
+
+// Placeholder content — replace each section with real CV data. Once a CV
+// PDF exists, drop it at public/cv/justin-kracht-cv.pdf and the download
+// link below will resolve.
+const education = [
+  {
+    degree: '[Degree, field]',
+    org: '[Institution]',
+    years: '[year]–[year]',
+  },
+];
+
+const publications = [
+  {
+    citation:
+      '[Author list]. ([year]). [Title of paper]. [Journal], [volume]([issue]), [pages].',
+    doi: '',
+  },
+];
+---
+
+<BaseLayout title="CV" description="Justin Kracht — CV and publications.">
+  <section class="wrapper cv">
+    <header class="cv__header">
+      <h1>CV</h1>
+      <a class="cv__download" href={withBase('cv/justin-kracht-cv.pdf')}>
+        Download PDF
+      </a>
+    </header>
+
+    <h2>Education</h2>
+    <ul class="cv__list">
+      {education.map((item) => (
+        <li>
+          <strong>{item.degree}</strong>
+          <span class="date-stamp">{item.years}</span>
+          <p>{item.org}</p>
+        </li>
+      ))}
+    </ul>
+
+    <h2>Publications</h2>
+    <ol class="cv__list cv__publications">
+      {publications.map((pub) => (
+        <li>
+          <p>{pub.citation}</p>
+          {pub.doi && (
+            <a href={`https://doi.org/${pub.doi}`} rel="noopener noreferrer" target="_blank">
+              doi:{pub.doi}
+            </a>
+          )}
+        </li>
+      ))}
+    </ol>
+
+    <p><em>[Placeholder content — fill in education, experience, and publications with DOIs.]</em></p>
+  </section>
+</BaseLayout>
+
+<style>
+  .cv {
+    padding-block: var(--space-6) var(--space-7);
+    max-width: 65ch;
+  }
+
+  .cv__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .cv__download {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    text-decoration: none;
+    border: 1px solid var(--color-rule);
+    padding: 0.35em 0.9em;
+    border-radius: var(--radius);
+  }
+  .cv__download:hover { border-color: var(--color-link); }
+
+  .cv__list {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-3) 0 var(--space-5);
+  }
+
+  .cv__list > li {
+    margin-bottom: var(--space-3);
+  }
+
+  .cv__publications { list-style: decimal; padding-left: 1.3em; }
+  .cv__publications li { margin-bottom: var(--space-3); }
+
+  @media print {
+    header.site-header, footer.site-footer, .cv__download { display: none; }
+  }
+</style>

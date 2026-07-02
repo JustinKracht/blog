@@ -1,0 +1,86 @@
+---
+import { NAV_LINKS, withBase } from '../../lib/site';
+
+const basePath = import.meta.env.BASE_URL.replace(/\/+$/, '');
+const currentPath = Astro.url.pathname.slice(basePath.length) || '/';
+---
+
+<header class="site-header">
+  <div class="wrapper site-header__inner">
+    <a href={withBase('')} class="site-header__brand">Justin Kracht</a>
+    <nav aria-label="Primary">
+      <ul class="site-header__nav">
+        {NAV_LINKS.map((link) => {
+          const href = withBase(link.href);
+          const isActive =
+            link.href === '/' ? currentPath === '/' : currentPath.startsWith(link.href);
+          return (
+            <li>
+              <a href={href} aria-current={isActive ? 'page' : undefined}>{link.label}</a>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: var(--space-3);
+    gap: var(--space-4);
+  }
+
+  .site-header__brand {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--color-text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .site-header__nav {
+    display: flex;
+    gap: var(--space-4);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+  }
+
+  .site-header__nav a {
+    color: var(--color-text);
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .site-header__nav a:hover,
+  .site-header__nav a:focus-visible {
+    color: var(--color-link);
+  }
+
+  .site-header__nav a[aria-current='page'] {
+    border-bottom-color: var(--color-accent-decorative);
+    color: var(--color-link);
+  }
+
+  @media (max-width: 640px) {
+    .site-header__inner { flex-wrap: wrap; row-gap: var(--space-2); }
+    .site-header__nav { gap: var(--space-3); flex-wrap: wrap; }
+  }
+</style>

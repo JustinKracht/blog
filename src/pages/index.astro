@@ -1,0 +1,105 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, withBase } from '../lib/site';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+---
+
+<BaseLayout title={SITE.title} description={SITE.description}>
+  <section class="wrapper hero">
+    <p class="date-stamp">Oslo, Norway</p>
+    <h1>Justin Kracht</h1>
+    <p class="hero__lede">
+      I work at the intersection of psychometrics and people analytics — measurement
+      theory, correlation-matrix geometry, and the messy statistics of human data.
+      This site collects interactive research explainers and occasional writing.
+    </p>
+    <p class="hero__links">
+      <a href={withBase('research')}>Research explainers</a>
+      &nbsp;&middot;&nbsp;
+      <a href={withBase('cv')}>CV</a>
+      &nbsp;&middot;&nbsp;
+      <a href={withBase('about')}>About</a>
+    </p>
+  </section>
+
+  <section class="wrapper featured">
+    <h2>Research</h2>
+    <p>
+      A series on the geometry of correlation matrices is in progress, starting with
+      an interactive explainer on the elliptope. Coming soon.
+    </p>
+    <p><a href={withBase('research')}>See the series index &rarr;</a></p>
+  </section>
+
+  {posts.length > 0 && (
+    <section class="wrapper latest">
+      <h2>Latest writing</h2>
+      <ul class="latest__list">
+        {posts.map((post) => (
+          <li>
+            <a href={withBase(`blog/${post.id}`)}>{post.data.title}</a>
+            <p class="date-stamp">
+              {post.data.date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </p>
+            <p class="latest__desc">{post.data.description}</p>
+          </li>
+        ))}
+      </ul>
+      <p><a href={withBase('blog')}>All posts &rarr;</a></p>
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-block: var(--space-7) var(--space-6);
+    max-width: 65ch;
+  }
+
+  .hero__lede {
+    font-size: 1.15rem;
+    margin-top: var(--space-3);
+  }
+
+  .hero__links {
+    font-family: var(--font-sans);
+    margin-top: var(--space-4);
+  }
+
+  .featured, .latest {
+    padding-block: var(--space-5);
+    border-top: 1px solid var(--color-rule);
+    max-width: 65ch;
+  }
+
+  .latest__list {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-3) 0;
+  }
+
+  .latest__list li {
+    margin-bottom: var(--space-4);
+  }
+
+  .latest__list a {
+    font-size: 1.1rem;
+    text-decoration: none;
+  }
+  .latest__list a:hover { text-decoration: underline; }
+
+  .latest__desc {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    opacity: 0.85;
+    margin-top: var(--space-1);
+  }
+</style>

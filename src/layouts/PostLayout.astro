@@ -1,0 +1,71 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { withBase } from '../lib/site';
+
+interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  tags: string[];
+  slug: string;
+}
+
+const { title, description, date, tags, slug } = Astro.props;
+const ogImage = withBase(`og/blog/${slug}.png`);
+
+const dateLabel = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={title} description={description} image={ogImage} type="article">
+  <article class="content-grid post">
+    <header class="post__header">
+      <p class="date-stamp">{dateLabel}</p>
+      <h1>{title}</h1>
+      {tags.length > 0 && (
+        <ul class="post__tags">
+          {tags.map((tag) => (
+            <li><a href={withBase(`blog/tags/${tag}`)}>{tag}</a></li>
+          ))}
+        </ul>
+      )}
+    </header>
+    <div class="post__body">
+      <slot />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .post {
+    padding-block: var(--space-6) var(--space-7);
+  }
+
+  .post__header {
+    margin-bottom: var(--space-5);
+  }
+
+  .post__header h1 { margin-bottom: var(--space-2); }
+
+  .post__tags {
+    display: flex;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: var(--space-2) 0 0;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+  }
+
+  .post__tags a {
+    color: var(--color-text);
+    background: var(--color-bg-recessed);
+    padding: 0.15em 0.6em;
+    border-radius: 999px;
+    text-decoration: none;
+  }
+  .post__tags a:hover { color: var(--color-link); }
+</style>

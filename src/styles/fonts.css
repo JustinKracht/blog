@@ -1,0 +1,23 @@
+/* Self-hosted variable + static fonts (served from node_modules via Vite's asset
+   pipeline through @fontsource) — no Google Fonts requests at runtime. */
+
+/* Andada Pro — variable, body & headings */
+@import '@fontsource-variable/andada-pro/wght.css';
+@import '@fontsource-variable/andada-pro/wght-italic.css';
+
+/* Alegreya Sans — UI, nav, captions, figure labels */
+@import '@fontsource/alegreya-sans/400.css';
+@import '@fontsource/alegreya-sans/400-italic.css';
+@import '@fontsource/alegreya-sans/500.css';
+@import '@fontsource/alegreya-sans/700.css';
+@import '@fontsource/alegreya-sans/800.css';
+
+/* Alegreya Sans SC — true small caps, date stamps & labels */
+@import '@fontsource/alegreya-sans-sc/400.css';
+@import '@fontsource/alegreya-sans-sc/500.css';
+@import '@fontsource/alegreya-sans-sc/700.css';
+
+/* Fira Code — code blocks, inline code */
+@import '@fontsource/fira-code/400.css';
+@import '@fontsource/fira-code/500.css';
+@import '@fontsource/fira-code/600.css';

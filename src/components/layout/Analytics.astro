@@ -1,0 +1,14 @@
+---
+// Privacy-friendly analytics: no cookies, no consent banner required.
+// GOATCOUNTER_SITE is empty until the account exists — the tag is a no-op then.
+import { GOATCOUNTER_SITE } from '../../lib/site';
+---
+
+{GOATCOUNTER_SITE && (
+  <script
+    is:inline
+    data-goatcounter={`https://${GOATCOUNTER_SITE}.goatcounter.com/count`}
+    async
+    src="//gc.zgo.at/count.js"
+  ></script>
+)}
